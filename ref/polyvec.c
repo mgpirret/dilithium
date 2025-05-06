@@ -13,44 +13,54 @@
 * Arguments:   - polyvecl mat[K]: output matrix
 *              - const uint8_t rho[]: byte array containing seed rho
 **************************************************/
-void polyvec_matrix_expand(polyvecl mat[K], const uint8_t rho[SEEDBYTES]) {
-  unsigned int i, j;
+void
+polyvec_matrix_expand(polyvecl mat[K], const uint8_t rho[SEEDBYTES])
+{
+    unsigned int i, j;
 
-  for(i = 0; i < K; ++i)
-    for(j = 0; j < L; ++j)
-      poly_uniform(&mat[i].vec[j], rho, (i << 8) + j);
+    for (i = 0; i < K; ++i)
+        for (j = 0; j < L; ++j)
+            poly_uniform(&mat[i].vec[j], rho, (i << 8) + j);
 }
 
-void polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], const polyvecl *v) {
-  unsigned int i;
+void
+polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], const polyvecl *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    polyvecl_pointwise_acc_montgomery(&t->vec[i], &mat[i], v);
+    for (i = 0; i < K; ++i)
+        polyvecl_pointwise_acc_montgomery(&t->vec[i], &mat[i], v);
 }
 
 /**************************************************************/
 /************ Vectors of polynomials of length L **************/
 /**************************************************************/
 
-void polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce) {
-  unsigned int i;
+void
+polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce)
+{
+    unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    poly_uniform_eta(&v->vec[i], seed, nonce++);
+    for (i = 0; i < L; ++i)
+        poly_uniform_eta(&v->vec[i], seed, nonce++);
 }
 
-void polyvecl_uniform_gamma1(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce) {
-  unsigned int i;
+void
+polyvecl_uniform_gamma1(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce)
+{
+    unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    poly_uniform_gamma1(&v->vec[i], seed, L*nonce + i);
+    for (i = 0; i < L; ++i)
+        poly_uniform_gamma1(&v->vec[i], seed, L * nonce + i);
 }
 
-void polyvecl_reduce(polyvecl *v) {
-  unsigned int i;
+void
+polyvecl_reduce(polyvecl *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    poly_reduce(&v->vec[i]);
+    for (i = 0; i < L; ++i)
+        poly_reduce(&v->vec[i]);
 }
 
 /*************************************************
@@ -63,11 +73,13 @@ void polyvecl_reduce(polyvecl *v) {
 *              - const polyvecl *u: pointer to first summand
 *              - const polyvecl *v: pointer to second summand
 **************************************************/
-void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v) {
-  unsigned int i;
+void
+polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    poly_add(&w->vec[i], &u->vec[i], &v->vec[i]);
+    for (i = 0; i < L; ++i)
+        poly_add(&w->vec[i], &u->vec[i], &v->vec[i]);
 }
 
 /*************************************************
@@ -78,25 +90,31 @@ void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v) {
 *
 * Arguments:   - polyvecl *v: pointer to input/output vector
 **************************************************/
-void polyvecl_ntt(polyvecl *v) {
-  unsigned int i;
+void
+polyvecl_ntt(polyvecl *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    poly_ntt(&v->vec[i]);
+    for (i = 0; i < L; ++i)
+        poly_ntt(&v->vec[i]);
 }
 
-void polyvecl_invntt_tomont(polyvecl *v) {
-  unsigned int i;
+void
+polyvecl_invntt_tomont(polyvecl *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    poly_invntt_tomont(&v->vec[i]);
+    for (i = 0; i < L; ++i)
+        poly_invntt_tomont(&v->vec[i]);
 }
 
-void polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyvecl *v) {
-  unsigned int i;
+void
+polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyvecl *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
+    for (i = 0; i < L; ++i)
+        poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
 }
 
 /*************************************************
@@ -110,18 +128,17 @@ void polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyve
 *              - const polyvecl *u: pointer to first input vector
 *              - const polyvecl *v: pointer to second input vector
 **************************************************/
-void polyvecl_pointwise_acc_montgomery(poly *w,
-                                       const polyvecl *u,
-                                       const polyvecl *v)
+void
+polyvecl_pointwise_acc_montgomery(poly *w, const polyvecl *u, const polyvecl *v)
 {
-  unsigned int i;
-  poly t;
+    unsigned int i;
+    poly         t;
 
-  poly_pointwise_montgomery(w, &u->vec[0], &v->vec[0]);
-  for(i = 1; i < L; ++i) {
-    poly_pointwise_montgomery(&t, &u->vec[i], &v->vec[i]);
-    poly_add(w, w, &t);
-  }
+    poly_pointwise_montgomery(w, &u->vec[0], &v->vec[0]);
+    for (i = 1; i < L; ++i) {
+        poly_pointwise_montgomery(&t, &u->vec[i], &v->vec[i]);
+        poly_add(w, w, &t);
+    }
 }
 
 /*************************************************
@@ -136,25 +153,29 @@ void polyvecl_pointwise_acc_montgomery(poly *w,
 * Returns 0 if norm of all polynomials is strictly smaller than B <= (Q-1)/8
 * and 1 otherwise.
 **************************************************/
-int polyvecl_chknorm(const polyvecl *v, int32_t bound)  {
-  unsigned int i;
+int
+polyvecl_chknorm(const polyvecl *v, int32_t bound)
+{
+    unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    if(poly_chknorm(&v->vec[i], bound))
-      return 1;
+    for (i = 0; i < L; ++i)
+        if (poly_chknorm(&v->vec[i], bound))
+            return 1;
 
-  return 0;
+    return 0;
 }
 
 /**************************************************************/
 /************ Vectors of polynomials of length K **************/
 /**************************************************************/
 
-void polyveck_uniform_eta(polyveck *v, const uint8_t seed[CRHBYTES], uint16_t nonce) {
-  unsigned int i;
+void
+polyveck_uniform_eta(polyveck *v, const uint8_t seed[CRHBYTES], uint16_t nonce)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_uniform_eta(&v->vec[i], seed, nonce++);
+    for (i = 0; i < K; ++i)
+        poly_uniform_eta(&v->vec[i], seed, nonce++);
 }
 
 /*************************************************
@@ -165,11 +186,13 @@ void polyveck_uniform_eta(polyveck *v, const uint8_t seed[CRHBYTES], uint16_t no
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_reduce(polyveck *v) {
-  unsigned int i;
+void
+polyveck_reduce(polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_reduce(&v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_reduce(&v->vec[i]);
 }
 
 /*************************************************
@@ -180,11 +203,13 @@ void polyveck_reduce(polyveck *v) {
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_caddq(polyveck *v) {
-  unsigned int i;
+void
+polyveck_caddq(polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_caddq(&v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_caddq(&v->vec[i]);
 }
 
 /*************************************************
@@ -197,11 +222,13 @@ void polyveck_caddq(polyveck *v) {
 *              - const polyveck *u: pointer to first summand
 *              - const polyveck *v: pointer to second summand
 **************************************************/
-void polyveck_add(polyveck *w, const polyveck *u, const polyveck *v) {
-  unsigned int i;
+void
+polyveck_add(polyveck *w, const polyveck *u, const polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_add(&w->vec[i], &u->vec[i], &v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_add(&w->vec[i], &u->vec[i], &v->vec[i]);
 }
 
 /*************************************************
@@ -215,11 +242,13 @@ void polyveck_add(polyveck *w, const polyveck *u, const polyveck *v) {
 *              - const polyveck *v: pointer to second input vector to be
 *                                   subtracted from first input vector
 **************************************************/
-void polyveck_sub(polyveck *w, const polyveck *u, const polyveck *v) {
-  unsigned int i;
+void
+polyveck_sub(polyveck *w, const polyveck *u, const polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_sub(&w->vec[i], &u->vec[i], &v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_sub(&w->vec[i], &u->vec[i], &v->vec[i]);
 }
 
 /*************************************************
@@ -230,11 +259,13 @@ void polyveck_sub(polyveck *w, const polyveck *u, const polyveck *v) {
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_shiftl(polyveck *v) {
-  unsigned int i;
+void
+polyveck_shiftl(polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_shiftl(&v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_shiftl(&v->vec[i]);
 }
 
 /*************************************************
@@ -245,11 +276,13 @@ void polyveck_shiftl(polyveck *v) {
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_ntt(polyveck *v) {
-  unsigned int i;
+void
+polyveck_ntt(polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_ntt(&v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_ntt(&v->vec[i]);
 }
 
 /*************************************************
@@ -261,20 +294,23 @@ void polyveck_ntt(polyveck *v) {
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_invntt_tomont(polyveck *v) {
-  unsigned int i;
+void
+polyveck_invntt_tomont(polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_invntt_tomont(&v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_invntt_tomont(&v->vec[i]);
 }
 
-void polyveck_pointwise_poly_montgomery(polyveck *r, const poly *a, const polyveck *v) {
-  unsigned int i;
+void
+polyveck_pointwise_poly_montgomery(polyveck *r, const poly *a, const polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
 }
-
 
 /*************************************************
 * Name:        polyveck_chknorm
@@ -288,14 +324,16 @@ void polyveck_pointwise_poly_montgomery(polyveck *r, const poly *a, const polyve
 * Returns 0 if norm of all polynomials are strictly smaller than B <= (Q-1)/8
 * and 1 otherwise.
 **************************************************/
-int polyveck_chknorm(const polyveck *v, int32_t bound) {
-  unsigned int i;
+int
+polyveck_chknorm(const polyveck *v, int32_t bound)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    if(poly_chknorm(&v->vec[i], bound))
-      return 1;
+    for (i = 0; i < K; ++i)
+        if (poly_chknorm(&v->vec[i], bound))
+            return 1;
 
-  return 0;
+    return 0;
 }
 
 /*************************************************
@@ -312,11 +350,13 @@ int polyveck_chknorm(const polyveck *v, int32_t bound) {
 *                              coefficients a0
 *              - const polyveck *v: pointer to input vector
 **************************************************/
-void polyveck_power2round(polyveck *v1, polyveck *v0, const polyveck *v) {
-  unsigned int i;
+void
+polyveck_power2round(polyveck *v1, polyveck *v0, const polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_power2round(&v1->vec[i], &v0->vec[i], &v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_power2round(&v1->vec[i], &v0->vec[i], &v->vec[i]);
 }
 
 /*************************************************
@@ -334,11 +374,13 @@ void polyveck_power2round(polyveck *v1, polyveck *v0, const polyveck *v) {
 *                              coefficients a0
 *              - const polyveck *v: pointer to input vector
 **************************************************/
-void polyveck_decompose(polyveck *v1, polyveck *v0, const polyveck *v) {
-  unsigned int i;
+void
+polyveck_decompose(polyveck *v1, polyveck *v0, const polyveck *v)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_decompose(&v1->vec[i], &v0->vec[i], &v->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_decompose(&v1->vec[i], &v0->vec[i], &v->vec[i]);
 }
 
 /*************************************************
@@ -352,16 +394,15 @@ void polyveck_decompose(polyveck *v1, polyveck *v0, const polyveck *v) {
 *
 * Returns number of 1 bits.
 **************************************************/
-unsigned int polyveck_make_hint(polyveck *h,
-                                const polyveck *v0,
-                                const polyveck *v1)
+unsigned int
+polyveck_make_hint(polyveck *h, const polyveck *v0, const polyveck *v1)
 {
-  unsigned int i, s = 0;
+    unsigned int i, s = 0;
 
-  for(i = 0; i < K; ++i)
-    s += poly_make_hint(&h->vec[i], &v0->vec[i], &v1->vec[i]);
+    for (i = 0; i < K; ++i)
+        s += poly_make_hint(&h->vec[i], &v0->vec[i], &v1->vec[i]);
 
-  return s;
+    return s;
 }
 
 /*************************************************
@@ -374,16 +415,20 @@ unsigned int polyveck_make_hint(polyveck *h,
 *              - const polyveck *u: pointer to input vector
 *              - const polyveck *h: pointer to input hint vector
 **************************************************/
-void polyveck_use_hint(polyveck *w, const polyveck *u, const polyveck *h) {
-  unsigned int i;
+void
+polyveck_use_hint(polyveck *w, const polyveck *u, const polyveck *h)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_use_hint(&w->vec[i], &u->vec[i], &h->vec[i]);
+    for (i = 0; i < K; ++i)
+        poly_use_hint(&w->vec[i], &u->vec[i], &h->vec[i]);
 }
 
-void polyveck_pack_w1(uint8_t r[K*POLYW1_PACKEDBYTES], const polyveck *w1) {
-  unsigned int i;
+void
+polyveck_pack_w1(uint8_t r[K * POLYW1_PACKEDBYTES], const polyveck *w1)
+{
+    unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    polyw1_pack(&r[i*POLYW1_PACKEDBYTES], &w1->vec[i]);
+    for (i = 0; i < K; ++i)
+        polyw1_pack(&r[i * POLYW1_PACKEDBYTES], &w1->vec[i]);
 }
